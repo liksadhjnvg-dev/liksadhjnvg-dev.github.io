@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trainingslog</title>
+<style>body{margin:0;background:#15171b;padding:12px 0;}</style>
+</head>
+<body>
+<!-- Trainingslog: Push/Pull/Beine -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  #tl-root {
+    --bg: #15171b;
+    --surface: #1e2127;
+    --surface-2: #272b32;
+    --text: #edeef0;
+    --text-muted: #8b8f96;
+    --accent: #e8862e;
+    --accent-dim: #3a2c1c;
+    --border: #303540;
+    --ok: #6fae6f;
+    font-family: 'Inter', sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    padding: 24px 16px 32px;
+    border-radius: 16px;
+    max-width: 720px;
+    margin: 0 auto;
+  }
+  #tl-root * { box-sizing: border-box; }
+  .tl-h1 {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 700;
+    font-size: 26px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin: 0 0 4px;
+  }
+  .tl-sub { color: var(--text-muted); font-size: 13px; margin: 0 0 20px; }
+  .tl-tabs { display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 1px solid var(--border); }
+  .tl-tab {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    padding: 10px 4px 12px;
+    cursor: pointer;
+    position: relative;
+    flex: 1;
+  }
+  .tl-tab.active { color: var(--accent); }
+  .tl-tab.active::after {
+    content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--accent);
+  }
+  .tl-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .tl-card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 10px; }
+  .tl-ex-name { font-weight: 500; font-size: 15px; }
+  .tl-ex-equip { color: var(--text-muted); font-size: 12px; }
+  .tl-volume {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+  .tl-set-row { display: grid; grid-template-columns: 28px 1fr 1fr 28px; gap: 8px; align-items: center; margin-bottom: 6px; }
+  .tl-set-num { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--text-muted); text-align: center; }
+  .tl-input {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 8px 10px;
+    width: 100%;
+  }
+  .tl-input:focus { outline: none; border-color: var(--accent); }
+  .tl-input::placeholder { color: var(--text-muted); }
+  .tl-del {
+    background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 16px; line-height: 1;
+    padding: 4px;
+  }
+  .tl-del:hover { color: #d9534f; }
+  .tl-labels { display: grid; grid-template-columns: 28px 1fr 1fr 28px; gap: 8px; margin-bottom: 6px; }
+  .tl-labels span { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.3px; }
+  .tl-add {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    background: var(--accent-dim);
+    color: var(--accent);
+    border: none;
+    border-radius: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    margin-top: 4px;
+  }
+  .tl-add:hover { filter: brightness(1.15); }
+  .tl-status {
+    font-size: 12px; color: var(--text-muted); text-align: right; margin-top: 4px; min-height: 16px;
+  }
+  .tl-status.saved { color: var(--ok); }
+  .tl-loading { color: var(--text-muted); font-size: 13px; padding: 20px 0; text-align: center; }
+  .tl-card-actions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .tl-finish {
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500;
+    background: none; color: var(--ok); border: 1px solid var(--ok); border-radius: 8px;
+    padding: 8px 12px; cursor: pointer;
+  }
+  .tl-finish:hover { background: rgba(111,174,111,0.12); }
+  .tl-history-toggle {
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500;
+    background: none; color: var(--text-muted); border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 12px; cursor: pointer;
+  }
+  .tl-history-toggle:hover { color: var(--text); }
+  .tl-history { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 12px; display: none; }
+  .tl-history.open { display: block; }
+  .tl-history-empty { color: var(--text-muted); font-size: 12px; }
+  .tl-hblock { margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px dashed var(--border); }
+  .tl-hblock:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .tl-hrow-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+  .tl-hdate { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--text-muted); flex-shrink: 0; }
+  .tl-hsummary { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--accent); text-align: right; }
+  .tl-hsets { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+  .tl-newex-toggle {
+    font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 14px; letter-spacing: 0.3px;
+    text-transform: uppercase; background: var(--surface); color: var(--accent);
+    border: 1px dashed var(--accent); border-radius: 12px; padding: 14px; width: 100%; cursor: pointer;
+    margin-top: 4px;
+  }
+  .tl-newex-toggle:hover { background: var(--accent-dim); }
+  .tl-newex-form {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 16px; margin-top: 4px; display: none;
+  }
+  .tl-newex-form.open { display: block; }
+  .tl-form-row { margin-bottom: 12px; }
+  .tl-form-row label { display: block; font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 6px; }
+  .tl-form-row select, .tl-form-row input { font-family: 'Inter', sans-serif; }
+  .tl-form-actions { display: flex; gap: 8px; margin-top: 4px; }
+  .tl-form-submit {
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500;
+    background: var(--accent); color: #1a1300; border: none; border-radius: 8px;
+    padding: 9px 14px; cursor: pointer;
+  }
+  .tl-form-cancel {
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500;
+    background: none; color: var(--text-muted); border: 1px solid var(--border); border-radius: 8px;
+    padding: 9px 14px; cursor: pointer;
+  }
+  .tl-card-head { justify-content: space-between; }
+  .tl-head-main { display: flex; justify-content: space-between; align-items: baseline; flex: 1; gap: 12px; }
+  .tl-equip-icon {
+    width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--surface-2); border: 1.5px solid var(--icon-color, var(--border));
+    margin-left: 12px;
+  }
+  .tl-guide-toggle {
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500;
+    background: none; color: var(--accent); border: 1px solid var(--accent); border-radius: 8px;
+    padding: 8px 12px; cursor: pointer;
+  }
+  .tl-guide-toggle:hover { background: var(--accent-dim); }
+  .tl-guide { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 12px; display: none; }
+  .tl-guide.open { display: block; }
+  .tl-guide ol { margin: 0; padding-left: 20px; }
+  .tl-guide li { font-size: 13px; line-height: 1.6; color: var(--text); margin-bottom: 6px; }
+  .tl-guide li::marker { color: var(--accent); font-family: 'IBM Plex Mono', monospace; font-weight: 600; }
+  .tl-e1rm { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--text-muted); white-space: nowrap; margin-top: 2px; }
+  .tl-best { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #d9b23a; white-space: nowrap; margin-top: 2px; }
+  .tl-pr-badge { color: #d9b23a; font-size: 11px; margin-left: 4px; }
+  .tl-deload {
+    margin-top: 10px; padding: 8px 10px; border-radius: 8px; background: rgba(217,165,58,0.1);
+    border: 1px solid rgba(217,165,58,0.4); color: #d9b23a; font-size: 12px; line-height: 1.5;
+  }
+  .tl-goal-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+  .tl-goal-label { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+  .tl-goal-input { width: 70px; }
+  .tl-goal-save {
+    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500;
+    background: var(--accent-dim); color: var(--accent); border: none; border-radius: 6px;
+    padding: 6px 10px; cursor: pointer;
+  }
+  .tl-goal-progress-wrap { margin-top: 8px; }
+  .tl-goal-progress-track { background: var(--surface-2); border-radius: 4px; height: 8px; overflow: hidden; }
+  .tl-goal-progress-fill { background: var(--accent); height: 100%; border-radius: 4px; }
+  .tl-goal-progress-label { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+  .tl-overview-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 14px 16px; margin-bottom: 12px;
+  }
+  .tl-overview-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+  .tl-overview-name { font-weight: 500; font-size: 14px; }
+  .tl-overview-meta { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--text-muted); }
+  .tl-overview-empty { color: var(--text-muted); font-size: 12px; padding: 4px 0; }
+  .tl-legend { display: flex; gap: 14px; margin-top: 6px; }
+  .tl-legend span { font-size: 10px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
+  .tl-legend i { width: 10px; height: 2px; display: inline-block; }
+  .tl-ex-muscles { color: var(--text-muted); font-size: 11px; margin-top: 2px; }
+  .tl-overview-muscles { color: var(--text-muted); font-size: 11px; margin-top: 2px; }
+  .tl-overview-section {
+    font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 15px; letter-spacing: 0.5px;
+    text-transform: uppercase; color: var(--accent); margin: 22px 0 10px;
+    border-bottom: 1px solid var(--border); padding-bottom: 6px;
+  }
+  .tl-overview-section:first-child { margin-top: 0; }
+</style>
+
+<div id="tl-root">
+  <div class="tl-h1">Trainingslog</div>
+  <p class="tl-sub">Sätze, Wiederholungen und Gewicht pro Übung eintragen — wird automatisch gespeichert.</p>
+  <div class="tl-tabs" id="tl-tabs"></div>
+  <div id="tl-content"><div class="tl-loading">Lade...</div></div>
+  <div class="tl-status" id="tl-status"></div>
+</div>
+
+<script>
+window.storage = {
+  async get(key, shared) {
+    const raw = localStorage.getItem('tl_' + key);
+    if (raw === null) throw new Error('key not found');
+    return { key: key, value: raw, shared: !!shared };
+  },
+  async set(key, value, shared) {
+    localStorage.setItem('tl_' + key, value);
+    return { key: key, value: value, shared: !!shared };
+  },
+  async delete(key, shared) {
+    localStorage.removeItem('tl_' + key);
+    return { key: key, deleted: true, shared: !!shared };
+  },
+  async list(prefix, shared) {
+    const p = 'tl_' + (prefix || '');
+    const keys = Object.keys(localStorage).filter(k => k.startsWith(p)).map(k => k.slice(3));
+    return { keys: keys, prefix: prefix, shared: !!shared };
+  }
+};
+(function() {
+  const DAYS = {
+    push: {
+      label: 'Push',
+      exercises: [
+        { name: 'Kurzhantel-Bankdrücken', equip: 'Kurzhantel + Bank', pose: 'horizontal_press', muscles: { primary: 'Brust', secondary: 'Trizeps, vordere Schulter' }, steps: [
+          'Auf der Bank liegen, Füße fest am Boden, Kurzhanteln über der Brust halten.',
+          'Hanteln kontrolliert bis auf Brusthöhe absenken, Ellbogen ca. 45° zum Körper.',
+          'Kurz unten pausieren, dann explosiv nach oben drücken bis die Arme fast gestreckt sind.',
+          '3-4 Sätze x 6-8 Wiederholungen.'
+        ]},
+        { name: 'Schrägbankdrücken', equip: 'Kurzhantel + Bank', pose: 'horizontal_press', muscles: { primary: 'Obere Brust', secondary: 'Vordere Schulter, Trizeps' }, steps: [
+          'Bank auf 30-45° einstellen, Kurzhanteln auf Schulterhöhe starten.',
+          'Hanteln langsam absenken bis eine leichte Dehnung in der oberen Brust spürbar ist.',
+          'Nach oben drücken, Hanteln am Ende leicht zueinander führen.',
+          '3 Sätze x 8-10 Wiederholungen.'
+        ]},
+        { name: 'Schulterdrücken', equip: 'Kurzhantel', pose: 'overhead_press', muscles: { primary: 'Vordere Schulter', secondary: 'Trizeps, oberer Trapezmuskel' }, steps: [
+          'Aufrecht sitzen oder stehen, Kurzhanteln auf Schulterhöhe, Handflächen nach vorne.',
+          'Hanteln über den Kopf drücken bis die Arme fast gestreckt sind, Rumpf stabil halten.',
+          'Kontrolliert zurück auf Schulterhöhe absenken.',
+          '3 Sätze x 8-10 Wiederholungen.'
+        ]},
+        { name: 'Seitheben', equip: 'Kurzhantel', pose: 'lateral_raise', muscles: { primary: 'Seitliche Schulter', secondary: 'Vordere Schulter, Trapezmuskel' }, steps: [
+          'Aufrecht stehen, Kurzhanteln seitlich am Körper, leichte Ellbogenbeugung.',
+          'Arme seitlich bis Schulterhöhe anheben, keinen Schwung aus dem Rücken nutzen.',
+          'Kurz oben halten, dann langsam absenken.',
+          '3 Sätze x 12-15 Wiederholungen.'
+        ]},
+        { name: 'Trizepsdrücken', equip: 'Widerstandsband', pose: 'triceps_overhead', type: 'band', muscles: { primary: 'Trizeps', secondary: '–' }, steps: [
+          'Widerstandsband über Kopf oder an einer Tür befestigen, Ellbogen nah am Kopf.',
+          'Unterarm nach oben strecken, bis der Arm fast gerade ist.',
+          'Kontrolliert zurück in die Ausgangsposition führen.',
+          '3 Sätze x 10-12 Wiederholungen.'
+        ]},
+        { name: 'French Press', equip: 'SZ-Stange', pose: 'triceps_overhead', muscles: { primary: 'Trizeps', secondary: '–' }, steps: [
+          'SZ-Stange mit engem Griff über dem Kopf halten, Oberarme senkrecht.',
+          'Stange hinter den Kopf absenken, nur im Ellbogengelenk bewegen.',
+          'Zurück nach oben strecken.',
+          '2-3 Sätze x 12-15 Wiederholungen.'
+        ]},
+      ]
+    },
+    pull: {
+      label: 'Pull',
+      exercises: [
+        { name: 'Kurzhantel-Rudern', equip: 'Kurzhantel', pose: 'bent_row', muscles: { primary: 'Breiter Rückenmuskel', secondary: 'Bizeps, hintere Schulter' }, steps: [
+          'Leicht nach vorne gebeugt, Rücken gerade, Kurzhanteln unter den Schultern.',
+          'Hanteln zur Hüfte ziehen, Ellbogen nah am Körper führen.',
+          'Schulterblätter am Ende zusammenziehen, dann kontrolliert absenken.',
+          '3 Sätze x 8-10 Wiederholungen.'
+        ]},
+        { name: 'Einarmiges Rudern', equip: 'Widerstandsband', pose: 'bent_row', type: 'band', muscles: { primary: 'Breiter Rückenmuskel', secondary: 'Bizeps, hintere Schulter' }, steps: [
+          'Band unter dem Fuß fixieren oder an einem Punkt befestigen, leicht vorgebeugt.',
+          'Mit einem Arm zur Hüfte ziehen, Ellbogen eng am Körper.',
+          'Langsam wieder strecken, dann die Seite wechseln.',
+          '3 Sätze x 10-12 Wiederholungen pro Seite.'
+        ]},
+        { name: 'Kurzhantel-Kreuzheben', equip: 'Kurzhantel', pose: 'hinge_deadlift', muscles: { primary: 'Unterer Rücken, Gesäß', secondary: 'Beinbeuger, Trapezmuskel' }, steps: [
+          'Kurzhanteln vor den Oberschenkeln halten, Füße hüftbreit.',
+          'Hüfte nach hinten schieben, Rücken gerade, Hanteln nah am Bein entlang absenken.',
+          'Über die Fersen aufrichten, Hüfte am Ende nach vorne strecken.',
+          '3-4 Sätze x 6-8 Wiederholungen.'
+        ]},
+        { name: 'Face Pulls', equip: 'Widerstandsband', pose: 'face_pull', type: 'band', muscles: { primary: 'Hintere Schulter', secondary: 'Oberer Rücken, Rotatorenmanschette' }, steps: [
+          'Band auf Gesichtshöhe befestigen, leicht nach hinten lehnen.',
+          'Band zum Gesicht ziehen, Ellbogen hoch und nach außen führen.',
+          'Schulterblätter zusammenziehen, dann kontrolliert zurückführen.',
+          '3 Sätze x 15 Wiederholungen.'
+        ]},
+        { name: 'Bizepscurls', equip: 'SZ-Stange', pose: 'curl', muscles: { primary: 'Bizeps', secondary: 'Unterarme' }, steps: [
+          'SZ-Stange mit schulterbreitem Griff halten, Ellbogen am Körper fixiert.',
+          'Stange nach oben curlen, ohne den Oberkörper zu schwingen.',
+          'Kontrolliert wieder absenken bis die Arme fast gestreckt sind.',
+          '3 Sätze x 10-12 Wiederholungen.'
+        ]},
+        { name: 'Hammercurls', equip: 'Kurzhantel', pose: 'curl', muscles: { primary: 'Bizeps (Brachialis)', secondary: 'Unterarme' }, steps: [
+          'Kurzhanteln seitlich halten, Handflächen zeigen zueinander.',
+          'Hanteln curlen, die Handstellung bleibt während der ganzen Bewegung neutral.',
+          'Langsam wieder absenken.',
+          '2-3 Sätze x 12-15 Wiederholungen.'
+        ]},
+        { name: 'Reverse Flys', equip: 'Kurzhantel', pose: 'reverse_fly', muscles: { primary: 'Hintere Schulter', secondary: 'Oberer Rücken, Rotatorenmanschette' }, steps: [
+          'Leicht vorgebeugt stehen, Rücken gerade, Kurzhanteln vor dem Körper hängen lassen.',
+          'Arme mit leicht gebeugten Ellbogen seitlich nach oben führen bis Schulterhöhe.',
+          'Bewegung bewusst aus der hinteren Schulter steuern, kein Schwung aus dem Rücken.',
+          '3 Sätze x 12-15 Wiederholungen.'
+        ]},
+      ]
+    },
+    beine: {
+      label: 'Beine',
+      exercises: [
+        { name: 'Goblet Squats', equip: 'Kurzhantel', pose: 'squat', muscles: { primary: 'Quadrizeps', secondary: 'Gesäß, Rumpf' }, steps: [
+          'Kurzhantel senkrecht vor der Brust halten, Füße schulterbreit.',
+          'In die Hocke gehen, Knie folgen den Zehen, Rücken bleibt gerade.',
+          'Über die Fersen wieder nach oben drücken.',
+          '3-4 Sätze x 8-10 Wiederholungen.'
+        ]},
+        { name: 'Rumänisches Kreuzheben', equip: 'Kurzhantel', pose: 'hinge_deadlift', muscles: { primary: 'Beinbeuger', secondary: 'Gesäß, unterer Rücken' }, steps: [
+          'Kurzhanteln vor den Oberschenkeln, Knie nur leicht gebeugt.',
+          'Hüfte nach hinten schieben, Hanteln eng am Bein entlang absenken bis Dehnung im Hamstring.',
+          'Über die Hüfte wieder aufrichten.',
+          '3 Sätze x 8-10 Wiederholungen.'
+        ]},
+        { name: 'Bulgarian Split Squats', equip: 'Kurzhantel + Bank', pose: 'lunge', muscles: { primary: 'Quadrizeps', secondary: 'Gesäß, Beinbeuger' }, steps: [
+          'Hinteren Fuß erhöht auf der Bank ablegen, das vordere Bein trägt das Gewicht.',
+          'Knie beugen bis der Oberschenkel etwa parallel zum Boden ist, Rumpf aufrecht.',
+          'Über die vordere Ferse wieder hochdrücken.',
+          '2-3 Sätze x 10 Wiederholungen pro Bein.'
+        ]},
+        { name: 'Band-Beinbeuger', equip: 'Widerstandsband', pose: 'leg_curl', type: 'band', muscles: { primary: 'Beinbeuger', secondary: 'Gesäß' }, steps: [
+          'Band an Knöchel und festem Punkt befestigen, Bauchlage oder stehend.',
+          'Ferse Richtung Gesäß ziehen, der Oberschenkel bleibt ruhig.',
+          'Kontrolliert zurückführen.',
+          '3 Sätze x 10-12 Wiederholungen.'
+        ]},
+        { name: 'Wadenheben', equip: 'Kurzhantel + Korkblock', pose: 'calf_raise', muscles: { primary: 'Wadenmuskel', secondary: '–' }, steps: [
+          'Fußballen auf den Korkblock stellen, Fersen ragen frei nach hinten.',
+          'Fersen langsam unter Blockhöhe absenken für maximale Dehnung.',
+          'Explosiv nach oben drücken, bis auf die Zehenspitzen.',
+          '4 Sätze x 12-15 Wiederholungen.'
+        ]},
+        { name: 'Ausfallschritte', equip: 'Kurzhantel', pose: 'lunge', muscles: { primary: 'Quadrizeps', secondary: 'Gesäß, Beinbeuger' }, steps: [
+          'Aufrecht stehen, Kurzhanteln seitlich halten.',
+          'Großen Schritt nach vorne, beide Knie auf ca. 90° beugen.',
+          'Über die vordere Ferse zurück in die Ausgangsposition drücken.',
+          '2-3 Sätze x 10 Wiederholungen pro Bein.'
+        ]},
+      ]
+    }
+  };
+
+  let currentDay = 'push';
+  let dataCache = {}; // dayKey -> array of arrays of {reps, weight}
+  const tabsEl = document.getElementById('tl-tabs');
+  const contentEl = document.getElementById('tl-content');
+  const statusEl = document.getElementById('tl-status');
+
+  Object.keys(DAYS).forEach(key => {
+    const btn = document.createElement('button');
+    btn.className = 'tl-tab' + (key === currentDay ? ' active' : '');
+    btn.textContent = DAYS[key].label;
+    btn.dataset.day = key;
+    btn.onclick = () => switchDay(key);
+    tabsEl.appendChild(btn);
+  });
+  const overviewBtn = document.createElement('button');
+  overviewBtn.className = 'tl-tab';
+  overviewBtn.textContent = 'Übersicht';
+  overviewBtn.dataset.day = 'overview';
+  overviewBtn.onclick = () => switchDay('overview');
+  tabsEl.appendChild(overviewBtn);
+
+  let historyCache = {}; // dayKey -> array of history arrays per exercise
+
+  function storageKey(day, exIndex) {
+    return 'sets:' + day + ':' + exIndex;
+  }
+
+  function historyKey(day, exIndex) {
+    return 'history:' + day + ':' + exIndex;
+  }
+
+  function todayStr() {
+    const d = new Date();
+    return d.toISOString().slice(0, 10);
+  }
+
+  function customExercisesKey(day) {
+    return 'custom-exercises:' + day;
+  }
+
+  async function loadCustomExercises(day) {
+    try {
+      const res = await window.storage.get(customExercisesKey(day), false);
+      return res && res.value ? JSON.parse(res.value) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  async function saveCustomExercises(day) {
+    const list = customExercisesCache[day] || [];
+    try {
+      await window.storage.set(customExercisesKey(day), JSON.stringify(list), false);
+    } catch (e) {
+      // silent fail
+    }
+  }
+
+  let customExercisesCache = {}; // dayKey -> array of custom exercise defs added by the user
+
+  async function loadDay(day) {
+    if (!DAYS[day]._merged) {
+      const custom = await loadCustomExercises(day);
+      customExercisesCache[day] = custom;
+      custom.forEach(ex => DAYS[day].exercises.push(ex));
+      DAYS[day]._merged = true;
+    }
+    const exercises = DAYS[day].exercises;
+    const sets = [];
+    const histories = [];
+    for (let i = 0; i < exercises.length; i++) {
+      try {
+        const res = await window.storage.get(storageKey(day, i), false);
+        sets.push(res && res.value ? JSON.parse(res.value) : [{ reps: '', weight: '' }]);
+      } catch (e) {
+        sets.push([{ reps: '', weight: '' }]);
+      }
+      try {
+        const hres = await window.storage.get(historyKey(day, i), false);
+        histories.push(hres && hres.value ? JSON.parse(hres.value) : []);
+      } catch (e) {
+        histories.push([]);
+      }
+    }
+    dataCache[day] = sets;
+    historyCache[day] = histories;
+  }
+
+  async function saveHistory(day, exIndex) {
+    try {
+      await window.storage.set(historyKey(day, exIndex), JSON.stringify(historyCache[day][exIndex]), false);
+    } catch (e) {
+      // silent fail, history is a bonus feature
+    }
+  }
+
+  async function saveExercise(day, exIndex) {
+    statusEl.textContent = 'Speichere...';
+    statusEl.classList.remove('saved');
+    try {
+      const value = JSON.stringify(dataCache[day][exIndex]);
+      const result = await window.storage.set(storageKey(day, exIndex), value, false);
+      if (result) {
+        statusEl.textContent = 'Gespeichert';
+        statusEl.classList.add('saved');
+      } else {
+        statusEl.textContent = 'Speichern fehlgeschlagen';
+      }
+    } catch (e) {
+      statusEl.textContent = 'Speichern fehlgeschlagen';
+    }
+  }
+
+  const BAND_LEVELS = [
+    { key: 'orange', label: 'Orange · leicht', color: '#e0862e' },
+    { key: 'gruen', label: 'Grün · mittel', color: '#4a9d5f' },
+    { key: 'blau', label: 'Blau · schwer', color: '#3d7fc4' },
+  ];
+
+  function bandLevel(key) {
+    return BAND_LEVELS.find(b => b.key === key);
+  }
+
+  function computeVolume(sets) {
+    let total = 0;
+    sets.forEach(s => {
+      const r = parseFloat(s.reps) || 0;
+      const w = parseFloat(s.weight) || 0;
+      total += r * w;
+    });
+    return total;
+  }
+
+  function computeMetric(ex, sets) {
+    if (ex.type === 'band') {
+      const totalReps = sets.reduce((sum, s) => sum + (parseFloat(s.reps) || 0), 0);
+      return 'Wiederholungen: ' + totalReps;
+    }
+    return 'Volumen: ' + computeVolume(sets) + ' kg';
+  }
+
+  function calcE1RM(weight, reps) {
+    const w = parseFloat(weight) || 0;
+    const r = parseFloat(reps) || 0;
+    if (w <= 0 || r <= 0) return 0;
+    return w * (1 + r / 30); // Epley-Formel
+  }
+
+  function lastSessionE1RM(ex, history) {
+    if (ex.type === 'band' || !history || history.length === 0) return null;
+    const last = history[history.length - 1];
+    if (!last.sets || last.sets.length === 0) return null;
+    let max = 0;
+    last.sets.forEach(s => {
+      const e = calcE1RM(s.weight, s.reps);
+      if (e > max) max = e;
+    });
+    if (max <= 0) return null;
+    return { value: Math.round(max * 10) / 10, date: last.date };
+  }
+
+  function e1rmLabel(ex, history) {
+    const r = lastSessionE1RM(ex, history);
+    if (!r) return ex.type === 'band' ? '' : 'e1RM: –';
+    return 'e1RM (' + r.date + '): ' + r.value + ' kg';
+  }
+
+  // Unified metric per history entry: e1RM (kg) for weight exercises, total reps for band exercises.
+  function sessionValue(ex, entry) {
+    if (!entry) return 0;
+    if (ex.type === 'band') return entry.totalReps || 0;
+    if (!entry.sets || entry.sets.length === 0) return entry.topWeight || 0;
+    let max = 0;
+    entry.sets.forEach(s => {
+      const e = calcE1RM(s.weight, s.reps);
+      if (e > max) max = e;
+    });
+    return Math.round(max * 10) / 10;
+  }
+
+  function bestSession(ex, history) {
+    if (!history || history.length === 0) return null;
+    let best = null;
+    history.forEach(h => {
+      const v = sessionValue(ex, h);
+      if (!best || v > best.value) best = { value: v, date: h.date };
+    });
+    return best;
+  }
+
+  function bestLabel(ex, history) {
+    const b = bestSession(ex, history);
+    if (!b || b.value <= 0) return '';
+    return 'Bestwert (' + b.date + '): ' + b.value + (ex.type === 'band' ? ' Wdh.' : ' kg');
+  }
+
+  function deloadNote(ex, history) {
+    if (!history || history.length < 3) return '';
+    const last3 = history.slice(-3).map(h => sessionValue(ex, h));
+    const stagnant = last3[0] >= last3[1] && last3[1] >= last3[2];
+    if (stagnant) {
+      return '⚠ Stagnation über die letzten 3 Einheiten – evtl. Entlastungswoche einplanen.';
+    }
+    return '';
+  }
+
+  function goalKey(day, exIndex) {
+    return 'goal:' + day + ':' + exIndex;
+  }
+
+  async function loadGoal(day, exIndex) {
+    try {
+      const res = await window.storage.get(goalKey(day, exIndex), false);
+      return res && res.value ? parseFloat(res.value) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  async function saveGoal(day, exIndex, value) {
+    try {
+      await window.storage.set(goalKey(day, exIndex), String(value), false);
+    } catch (e) {
+      // silent fail
+    }
+  }
+
+  function equipColor(equip) {
+    if (equip.indexOf('Korkblock') !== -1) return '#c9822f';
+    if (equip.indexOf('Widerstandsband') !== -1) return '#c96a4a';
+    if (equip.indexOf('SZ-Stange') !== -1) return '#3fa88a';
+    return '#4a90d9';
+  }
+
+  function muscleLine(ex) {
+    if (!ex.muscles) return '';
+    return 'Ziel: ' + ex.muscles.primary + ' · Sekundär: ' + ex.muscles.secondary;
+  }
+
+  function poseSvg(pose, color) {
+    const head = '<circle cx="12" cy="4" r="2"/>';
+    const legsStd = '<path d="M12 14L9 21M12 14L15 21"/>';
+    let body = '';
+    switch (pose) {
+      case 'horizontal_press':
+        body = `<circle cx="5" cy="14" r="2"/><path d="M7 14H16M16 14L20 12L22 16M10 14V7M14 14V7"/><circle cx="10" cy="6" r="1"/><circle cx="14" cy="6" r="1"/>`;
+        return svgWrap(body, color);
+      case 'overhead_press':
+        body = `${head}<path d="M12 6V14M12 8L7 3M12 8L17 3"/>${legsStd}`;
+        return svgWrap(body, color);
+      case 'lateral_raise':
+        body = `${head}<path d="M12 6V14M12 9H5M12 9H19"/>${legsStd}`;
+        return svgWrap(body, color);
+      case 'triceps_overhead':
+        body = `${head}<path d="M12 6V14M12 8L12 3L15 5M12 8L9 13"/>${legsStd}`;
+        return svgWrap(body, color);
+      case 'bent_row':
+        body = `<circle cx="8" cy="6" r="2"/><path d="M8 8L14 16M11 12L9 17M12 13L16 10M14 16L13 21M14 16L17 20"/>`;
+        return svgWrap(body, color);
+      case 'reverse_fly':
+        body = `<circle cx="8" cy="6" r="2"/><path d="M8 8L14 16M11 11L6 9M12 12L18 11M14 16L13 21M14 16L17 20"/>`;
+        return svgWrap(body, color);
+      case 'hinge_deadlift':
+        body = `<circle cx="8" cy="6" r="2"/><path d="M8 8L15 15M11 10L9 17M13 12L11 18M15 15L14 21M15 15L17 21"/>`;
+        return svgWrap(body, color);
+      case 'face_pull':
+        body = `${head}<path d="M12 6V14M6 9L9 7L12 9M18 9L15 7L12 9"/>${legsStd}`;
+        return svgWrap(body, color);
+      case 'curl':
+        body = `${head}<path d="M12 6V14M12 9L15 12L13 8M12 9L9 14"/>${legsStd}`;
+        return svgWrap(body, color);
+      case 'squat':
+        body = `${head}<path d="M12 6V11M12 8L9 9M12 8L15 9M12 11L9 15L9 21M12 11L15 15L15 21"/>`;
+        return svgWrap(body, color);
+      case 'lunge':
+        body = `${head}<path d="M12 6V13M12 8L10 12M12 8L14 12M12 13L10 17L10 21M12 13L16 16L19 19"/>`;
+        return svgWrap(body, color);
+      case 'calf_raise':
+        body = `${head}<path d="M12 6V14M12 8L10 13M12 8L14 13M12 14L11 21M12 14L13 21"/><path d="M9 21H15" stroke-dasharray="1 1.5"/>`;
+        return svgWrap(body, color);
+      case 'leg_curl':
+        body = `<circle cx="5" cy="10" r="2"/><path d="M7 10H15M9 10L7 13M15 10L15 14L18 12"/>`;
+        return svgWrap(body, color);
+      default:
+        body = `${head}<path d="M12 6V14"/>${legsStd}`;
+        return svgWrap(body, color);
+    }
+  }
+
+  function svgWrap(inner, color) {
+    return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
+  }
+
+  // Simple linear regression: returns {slope, intercept} for y = slope*x + intercept, x = index
+  function linearRegression(values) {
+    const n = values.length;
+    if (n < 2) return null;
+    let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+    for (let i = 0; i < n; i++) {
+      sumX += i; sumY += values[i]; sumXY += i * values[i]; sumXX += i * i;
+    }
+    const denom = (n * sumXX - sumX * sumX);
+    if (denom === 0) return null;
+    const slope = (n * sumXY - sumX * sumY) / denom;
+    const intercept = (sumY - slope * sumX) / n;
+    return { slope, intercept };
+  }
+
+  function trendChartSvg(points, unit, color) {
+    // points: [{date, value}], sorted ascending by date
+    const width = 620, height = 140, padL = 36, padR = 16, padT = 14, padB = 22;
+    const plotW = width - padL - padR, plotH = height - padT - padB;
+    if (points.length === 0) {
+      return `<div class="tl-overview-empty">Noch keine abgeschlossenen Einheiten.</div>`;
+    }
+    if (points.length === 1) {
+      return `<div class="tl-overview-empty">Erst eine Einheit erfasst (${points[0].value} ${unit}) — für einen Trend braucht es mindestens 2.</div>`;
+    }
+    const values = points.map(p => p.value);
+    const reg = linearRegression(values);
+    const forecastCount = 2;
+    const totalCount = points.length + forecastCount;
+    const forecastValues = [];
+    if (reg) {
+      for (let i = 0; i < forecastCount; i++) {
+        forecastValues.push(reg.slope * (points.length + i) + reg.intercept);
+      }
+    }
+    const allValues = values.concat(forecastValues);
+    const minV = Math.min(...allValues, 0);
+    const maxV = Math.max(...allValues) * 1.1 || 1;
+    const xFor = (i) => padL + (i / (totalCount - 1)) * plotW;
+    const yFor = (v) => padT + plotH - ((v - minV) / (maxV - minV || 1)) * plotH;
+
+    let historyPath = 'M' + points.map((p, i) => `${xFor(i)},${yFor(p.value)}`).join(' L');
+    let forecastPath = '';
+    if (reg && forecastValues.length > 0) {
+      forecastPath = 'M' + xFor(points.length - 1) + ',' + yFor(values[values.length - 1]) +
+        ' L' + forecastValues.map((v, i) => `${xFor(points.length + i)},${yFor(v)}`).join(' L');
+    }
+    const dots = points.map((p, i) => `<circle cx="${xFor(i)}" cy="${yFor(p.value)}" r="3" fill="${color}"/>`).join('');
+    const gridY = [0, 0.5, 1].map(t => {
+      const v = minV + t * (maxV - minV);
+      const y = yFor(v);
+      return `<line x1="${padL}" y1="${y}" x2="${width - padR}" y2="${y}" stroke="#303540" stroke-width="1"/><text x="4" y="${y + 4}" font-size="10" fill="#8b8f96" font-family="IBM Plex Mono, monospace">${Math.round(v)}</text>`;
+    }).join('');
+    const firstLabel = points[0].date, lastLabel = points[points.length - 1].date;
+
+    return `<svg width="100%" viewBox="0 0 ${width} ${height}" style="overflow:visible;">
+      ${gridY}
+      <path d="${historyPath}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+      ${forecastPath ? `<path d="${forecastPath}" fill="none" stroke="${color}" stroke-width="2" stroke-dasharray="4 4" opacity="0.55"/>` : ''}
+      ${dots}
+      <text x="${padL}" y="${height - 4}" font-size="10" fill="#8b8f96" font-family="Inter, sans-serif">${firstLabel}</text>
+      <text x="${width - padR}" y="${height - 4}" font-size="10" fill="#8b8f96" font-family="Inter, sans-serif" text-anchor="end">${lastLabel}</text>
+    </svg>`;
+  }
+
+  async function ensureAllDaysLoaded() {
+    for (const key of Object.keys(DAYS)) {
+      if (!dataCache[key]) {
+        await loadDay(key);
+      }
+    }
+  }
+
+  async function renderOverview() {
+    contentEl.innerHTML = '<div class="tl-loading">Lade...</div>';
+    await ensureAllDaysLoaded();
+    contentEl.innerHTML = '';
+
+    const intro = document.createElement('p');
+    intro.className = 'tl-sub';
+    intro.style.marginBottom = '16px';
+    intro.innerHTML = 'e1RM-Entwicklung (bzw. Wiederholungen bei Band-Übungen) je Übung, mit gestrichelter Prognose auf Basis des bisherigen Trends. Reine Fortschreibung der Kurve — keine Trainingswissenschaft.';
+    contentEl.appendChild(intro);
+
+    Object.keys(DAYS).forEach(day => {
+      const sectionHeader = document.createElement('div');
+      sectionHeader.className = 'tl-overview-section';
+      sectionHeader.textContent = DAYS[day].label;
+      contentEl.appendChild(sectionHeader);
+
+      DAYS[day].exercises.forEach((ex, exIndex) => {
+        const history = historyCache[day][exIndex];
+        const points = (history || []).map(h => ({ date: h.date, value: sessionValue(ex, h) })).filter(p => p.value > 0);
+        const card = document.createElement('div');
+        card.className = 'tl-overview-card';
+        const unit = ex.type === 'band' ? 'Wdh.' : 'kg';
+        const color = equipColor(ex.equip);
+        const best = bestSession(ex, history);
+        card.innerHTML = `
+          <div class="tl-overview-head">
+            <div>
+              <div class="tl-overview-name">${ex.name}</div>
+              <div class="tl-overview-meta">${ex.equip}</div>
+              <div class="tl-overview-muscles">${muscleLine(ex)}</div>
+            </div>
+            <div class="tl-overview-meta">${best ? 'Bestwert: ' + best.value + ' ' + unit : ''}</div>
+          </div>
+          ${trendChartSvg(points, unit, color)}
+        `;
+        contentEl.appendChild(card);
+      });
+    });
+  }
+
+  function render(day) {
+    contentEl.innerHTML = '';
+    const exercises = DAYS[day].exercises;
+    exercises.forEach((ex, exIndex) => {
+      const sets = dataCache[day][exIndex];
+      const card = document.createElement('div');
+      card.className = 'tl-card';
+
+      const head = document.createElement('div');
+      head.className = 'tl-card-head';
+      head.innerHTML = `
+        <div class="tl-head-main">
+          <div>
+            <div class="tl-ex-name">${ex.name}</div>
+            <div class="tl-ex-equip">${ex.equip}</div>
+            <div class="tl-ex-muscles">${muscleLine(ex)}</div>
+          </div>
+          <div style="text-align:right;">
+            <div class="tl-volume" data-vol="${exIndex}">${computeMetric(ex, sets)}</div>
+            <div class="tl-e1rm" data-e1rm="${exIndex}">${e1rmLabel(ex, historyCache[day][exIndex])}</div>
+            <div class="tl-best" data-best="${exIndex}">${bestLabel(ex, historyCache[day][exIndex])}</div>
+          </div>
+        </div>
+        <div class="tl-equip-icon" style="--icon-color:${equipColor(ex.equip)}">${poseSvg(ex.pose, equipColor(ex.equip))}</div>
+      `;
+      card.appendChild(head);
+
+      const labels = document.createElement('div');
+      labels.className = 'tl-labels';
+      labels.innerHTML = ex.type === 'band'
+        ? '<span></span><span>Wdh.</span><span>Stufe</span><span></span>'
+        : '<span></span><span>Wdh.</span><span>Gewicht (kg)</span><span></span>';
+      card.appendChild(labels);
+
+      const rowsWrap = document.createElement('div');
+      rowsWrap.dataset.rows = exIndex;
+
+      function renderRows() {
+        rowsWrap.innerHTML = '';
+        sets.forEach((set, setIndex) => {
+          const row = document.createElement('div');
+          row.className = 'tl-set-row';
+
+          const num = document.createElement('div');
+          num.className = 'tl-set-num';
+          num.textContent = setIndex + 1;
+          row.appendChild(num);
+
+          const repsInput = document.createElement('input');
+          repsInput.className = 'tl-input';
+          repsInput.type = 'number';
+          repsInput.min = '0';
+          repsInput.placeholder = 'z.B. 10';
+          repsInput.value = set.reps;
+          repsInput.oninput = () => {
+            set.reps = repsInput.value;
+            head.querySelector('.tl-volume').textContent = computeMetric(ex, sets);
+          };
+          repsInput.onblur = () => saveExercise(day, exIndex);
+          row.appendChild(repsInput);
+
+          let weightInput;
+          if (ex.type === 'band') {
+            weightInput = document.createElement('select');
+            weightInput.className = 'tl-input';
+            const emptyOpt = document.createElement('option');
+            emptyOpt.value = '';
+            emptyOpt.textContent = 'Stufe wählen';
+            weightInput.appendChild(emptyOpt);
+            BAND_LEVELS.forEach(lvl => {
+              const opt = document.createElement('option');
+              opt.value = lvl.key;
+              opt.textContent = lvl.label;
+              if (set.weight === lvl.key) opt.selected = true;
+              weightInput.appendChild(opt);
+            });
+            weightInput.onchange = () => {
+              set.weight = weightInput.value;
+              head.querySelector('.tl-volume').textContent = computeMetric(ex, sets);
+              saveExercise(day, exIndex);
+            };
+          } else {
+            weightInput = document.createElement('input');
+            weightInput.className = 'tl-input';
+            weightInput.type = 'number';
+            weightInput.min = '0';
+            weightInput.step = '0.5';
+            weightInput.placeholder = 'z.B. 12.5';
+            weightInput.value = set.weight;
+            weightInput.oninput = () => {
+              set.weight = weightInput.value;
+              head.querySelector('.tl-volume').textContent = computeMetric(ex, sets);
+            };
+            weightInput.onblur = () => saveExercise(day, exIndex);
+          }
+          row.appendChild(weightInput);
+
+          const del = document.createElement('button');
+          del.className = 'tl-del';
+          del.textContent = '\u00d7';
+          del.setAttribute('aria-label', 'Satz entfernen');
+          del.onclick = () => {
+            if (sets.length > 1) {
+              sets.splice(setIndex, 1);
+              renderRows();
+              head.querySelector('.tl-volume').textContent = computeMetric(ex, sets);
+              saveExercise(day, exIndex);
+            }
+          };
+          row.appendChild(del);
+
+          rowsWrap.appendChild(row);
+        });
+      }
+      renderRows();
+      card.appendChild(rowsWrap);
+
+      const addBtn = document.createElement('button');
+      addBtn.className = 'tl-add';
+      addBtn.textContent = '+ Satz hinzufügen';
+      addBtn.onclick = () => {
+        sets.push({ reps: '', weight: '' });
+        renderRows();
+        saveExercise(day, exIndex);
+      };
+      card.appendChild(addBtn);
+
+      const actions = document.createElement('div');
+      actions.className = 'tl-card-actions';
+
+      const finishBtn = document.createElement('button');
+      finishBtn.className = 'tl-finish';
+      finishBtn.textContent = 'Einheit abschließen';
+      finishBtn.onclick = async () => {
+        const validSets = sets.filter(s => s.reps !== '' && s.weight !== '');
+        if (validSets.length === 0) return;
+        const history = historyCache[day][exIndex];
+        const today = todayStr();
+        const existingIdx = history.findIndex(h => h.date === today);
+        let entry;
+        if (ex.type === 'band') {
+          const totalReps = validSets.reduce((sum, s) => sum + (parseFloat(s.reps) || 0), 0);
+          const order = { orange: 1, gruen: 2, blau: 3 };
+          const topLevelKey = validSets.reduce((top, s) => (order[s.weight] > order[top] ? s.weight : top), 'orange');
+          entry = { date: today, type: 'band', totalReps, topLevel: topLevelKey, sets: validSets.map(s => ({ reps: s.reps, weight: s.weight })) };
+        } else {
+          const volume = computeVolume(validSets);
+          const topWeight = Math.max(...validSets.map(s => parseFloat(s.weight) || 0));
+          entry = { date: today, type: 'weight', volume, topWeight, sets: validSets.map(s => ({ reps: s.reps, weight: s.weight })) };
+        }
+        if (existingIdx >= 0) history[existingIdx] = entry; else history.push(entry);
+        history.sort((a, b) => a.date.localeCompare(b.date));
+        await saveHistory(day, exIndex);
+        renderHistory();
+        const e1rmEl = head.querySelector('[data-e1rm="' + exIndex + '"]');
+        if (e1rmEl) e1rmEl.textContent = e1rmLabel(ex, history);
+        const bestEl = head.querySelector('[data-best="' + exIndex + '"]');
+        if (bestEl) bestEl.textContent = bestLabel(ex, history);
+        renderDeload();
+        const g = await loadGoal(day, exIndex);
+        if (g) renderGoalProgress(g);
+        statusEl.textContent = 'Einheit gespeichert';
+        statusEl.classList.add('saved');
+      };
+      actions.appendChild(finishBtn);
+
+      const historyToggle = document.createElement('button');
+      historyToggle.className = 'tl-history-toggle';
+      historyToggle.textContent = 'Verlauf';
+      const historyEl = document.createElement('div');
+      historyEl.className = 'tl-history';
+      historyToggle.onclick = () => historyEl.classList.toggle('open');
+      actions.appendChild(historyToggle);
+
+      const guideToggle = document.createElement('button');
+      guideToggle.className = 'tl-guide-toggle';
+      guideToggle.textContent = 'Anleitung';
+      const guideEl = document.createElement('div');
+      guideEl.className = 'tl-guide';
+      const stepsList = document.createElement('ol');
+      if (ex.steps && ex.steps.length > 0) {
+        ex.steps.forEach(step => {
+          const li = document.createElement('li');
+          li.textContent = step;
+          stepsList.appendChild(li);
+        });
+      } else {
+        guideEl.innerHTML = '';
+        const empty = document.createElement('div');
+        empty.className = 'tl-history-empty';
+        empty.textContent = 'Noch keine Anleitung für diese Übung hinterlegt.';
+        guideEl.appendChild(empty);
+      }
+      guideEl.appendChild(stepsList);
+      guideToggle.onclick = () => guideEl.classList.toggle('open');
+      actions.appendChild(guideToggle);
+
+      card.appendChild(actions);
+      card.appendChild(guideEl);
+
+      const deloadEl = document.createElement('div');
+      deloadEl.className = 'tl-deload';
+      deloadEl.style.display = 'none';
+      card.appendChild(deloadEl);
+
+      function renderDeload() {
+        const note = deloadNote(ex, historyCache[day][exIndex]);
+        if (note) {
+          deloadEl.textContent = note;
+          deloadEl.style.display = 'block';
+        } else {
+          deloadEl.style.display = 'none';
+        }
+      }
+      renderDeload();
+
+      const goalWrap = document.createElement('div');
+      const goalUnit = ex.type === 'band' ? 'Wdh.' : 'kg';
+      goalWrap.innerHTML = `
+        <div class="tl-goal-row">
+          <span class="tl-goal-label">Ziel (${goalUnit}):</span>
+          <input type="number" class="tl-input tl-goal-input" min="0" placeholder="z.B. ${ex.type === 'band' ? '150' : '40'}">
+          <button class="tl-goal-save">Speichern</button>
+        </div>
+        <div class="tl-goal-progress-wrap" style="display:none;">
+          <div class="tl-goal-progress-track"><div class="tl-goal-progress-fill" style="width:0%"></div></div>
+          <div class="tl-goal-progress-label"></div>
+        </div>
+      `;
+      card.appendChild(goalWrap);
+      const goalInput = goalWrap.querySelector('.tl-goal-input');
+      const goalSaveBtn = goalWrap.querySelector('.tl-goal-save');
+      const goalProgressWrap = goalWrap.querySelector('.tl-goal-progress-wrap');
+      const goalProgressFill = goalWrap.querySelector('.tl-goal-progress-fill');
+      const goalProgressLabel = goalWrap.querySelector('.tl-goal-progress-label');
+
+      function renderGoalProgress(goalValue) {
+        if (!goalValue || goalValue <= 0) {
+          goalProgressWrap.style.display = 'none';
+          return;
+        }
+        const best = bestSession(ex, historyCache[day][exIndex]);
+        const current = best ? best.value : 0;
+        const pct = Math.min(100, Math.round((current / goalValue) * 100));
+        goalProgressFill.style.width = pct + '%';
+        goalProgressLabel.textContent = current + ' / ' + goalValue + ' ' + goalUnit + ' (' + pct + '%)';
+        goalProgressWrap.style.display = 'block';
+      }
+
+      (async () => {
+        const g = await loadGoal(day, exIndex);
+        if (g) {
+          goalInput.value = g;
+          renderGoalProgress(g);
+        }
+      })();
+
+      goalSaveBtn.onclick = async () => {
+        const v = parseFloat(goalInput.value);
+        if (!v || v <= 0) return;
+        await saveGoal(day, exIndex, v);
+        renderGoalProgress(v);
+      };
+
+      function renderHistory() {
+        const history = historyCache[day][exIndex];
+        historyEl.innerHTML = '';
+        if (history.length === 0) {
+          historyEl.innerHTML = '<div class="tl-history-empty">Noch keine abgeschlossenen Einheiten.</div>';
+          return;
+        }
+        const recent = history.slice(-8).reverse();
+        const best = bestSession(ex, history);
+        recent.forEach(h => {
+          const block = document.createElement('div');
+          block.className = 'tl-hblock';
+
+          const top = document.createElement('div');
+          top.className = 'tl-hrow-top';
+          const isPR = best && sessionValue(ex, h) === best.value && best.value > 0;
+          const summary = h.type === 'band'
+            ? h.totalReps + ' Wdh. gesamt · Top-Stufe: ' + bandLevel(h.topLevel).label
+            : h.volume + ' kg Volumen · Top: ' + h.topWeight + ' kg';
+          top.innerHTML = `<span class="tl-hdate">${h.date}${isPR ? '<span class="tl-pr-badge" title="Bestwert">🏆</span>' : ''}</span><span class="tl-hsummary">${summary}</span>`;
+          block.appendChild(top);
+
+          const setsLine = document.createElement('div');
+          setsLine.className = 'tl-hsets';
+          setsLine.textContent = (h.sets || []).map(s => {
+            if (h.type === 'band') {
+              const lvl = bandLevel(s.weight);
+              return s.reps + '× ' + (lvl ? lvl.label.split(' ·')[0] : s.weight);
+            }
+            return s.reps + '×' + s.weight + 'kg';
+          }).join('  ·  ');
+          block.appendChild(setsLine);
+
+          historyEl.appendChild(block);
+        });
+      }
+      renderHistory();
+      card.appendChild(historyEl);
+
+      contentEl.appendChild(card);
+    });
+
+    const EQUIP_OPTIONS = [
+      { equip: 'Kurzhantel', type: 'weight' },
+      { equip: 'Kurzhantel + Bank', type: 'weight' },
+      { equip: 'SZ-Stange', type: 'weight' },
+      { equip: 'Kurzhantel + Korkblock', type: 'weight' },
+      { equip: 'Widerstandsband', type: 'band' },
+    ];
+
+    const newExToggle = document.createElement('button');
+    newExToggle.className = 'tl-newex-toggle';
+    newExToggle.textContent = '+ Neue Übung';
+    const newExForm = document.createElement('div');
+    newExForm.className = 'tl-newex-form';
+
+    const nameRow = document.createElement('div');
+    nameRow.className = 'tl-form-row';
+    nameRow.innerHTML = '<label>Name der Übung</label>';
+    const nameInput = document.createElement('input');
+    nameInput.className = 'tl-input';
+    nameInput.placeholder = 'z.B. Klimmzüge mit Band';
+    nameRow.appendChild(nameInput);
+
+    const equipRow = document.createElement('div');
+    equipRow.className = 'tl-form-row';
+    equipRow.innerHTML = '<label>Ausrüstung</label>';
+    const equipSelect = document.createElement('select');
+    equipSelect.className = 'tl-input';
+    EQUIP_OPTIONS.forEach(o => {
+      const opt = document.createElement('option');
+      opt.value = o.equip;
+      opt.textContent = o.equip;
+      equipSelect.appendChild(opt);
+    });
+    equipRow.appendChild(equipSelect);
+
+    const formActions = document.createElement('div');
+    formActions.className = 'tl-form-actions';
+    const submitBtn = document.createElement('button');
+    submitBtn.className = 'tl-form-submit';
+    submitBtn.textContent = 'Übung hinzufügen';
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'tl-form-cancel';
+    cancelBtn.textContent = 'Abbrechen';
+    formActions.appendChild(submitBtn);
+    formActions.appendChild(cancelBtn);
+
+    newExForm.appendChild(nameRow);
+    newExForm.appendChild(equipRow);
+    newExForm.appendChild(formActions);
+
+    newExToggle.onclick = () => newExForm.classList.toggle('open');
+    cancelBtn.onclick = () => {
+      newExForm.classList.remove('open');
+      nameInput.value = '';
+    };
+    submitBtn.onclick = async () => {
+      const name = nameInput.value.trim();
+      if (!name) { nameInput.focus(); return; }
+      const chosen = EQUIP_OPTIONS.find(o => o.equip === equipSelect.value);
+      const newEx = { name: name, equip: chosen.equip, pose: 'default', type: chosen.type, steps: [] };
+      DAYS[day].exercises.push(newEx);
+      customExercisesCache[day] = customExercisesCache[day] || [];
+      customExercisesCache[day].push(newEx);
+      await saveCustomExercises(day);
+      dataCache[day].push([{ reps: '', weight: '' }]);
+      historyCache[day].push([]);
+      nameInput.value = '';
+      newExForm.classList.remove('open');
+      render(day);
+    };
+
+    contentEl.appendChild(newExToggle);
+    contentEl.appendChild(newExForm);
+  }
+
+  async function switchDay(day) {
+    currentDay = day;
+    document.querySelectorAll('.tl-tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.day === day);
+    });
+    if (day === 'overview') {
+      await renderOverview();
+      return;
+    }
+    if (!dataCache[day]) {
+      contentEl.innerHTML = '<div class="tl-loading">Lade...</div>';
+      await loadDay(day);
+    }
+    render(day);
+  }
+
+  switchDay(currentDay);
+})();
+</script>
+
+</body>
+</html>
